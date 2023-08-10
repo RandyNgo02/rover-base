@@ -15,7 +15,7 @@ class MinimalPublisher(Node):
     def __init__(self):
         super().__init__('teleop')
 
-        self.speed_setting = 2 # default to medium speed
+        self.speed_setting = 2.0 # default to medium speed
         self.operating_mode = 0 # 0 for Stopped, 1 for Driving
 
         self.subscription = self.create_subscription(
@@ -24,7 +24,8 @@ class MinimalPublisher(Node):
             self.on_joy,
             1)
         
-        self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 1)
+        self.publisher_L = self.create_publisher(Float64, 'vel_L', 1)
+        self.publisher_R = self.create_publisher(Float64, 'vel_R', 1)
 
         # self.publisher_ = self.create_publisher(String, 'topic', 10)
         # timer_period = 0.5  # seconds
@@ -41,19 +42,19 @@ class MinimalPublisher(Node):
     def on_joy(self, data):
         # Set speed ratio using d-pad
         if data.axes[7] == 1: # full speed (d-pad up)
-            self.speed_setting = 1
+            self.speed_setting = 1.0
         if data.axes[6] != 0: # medium speed (d-pad left or right)
-            self.speed_setting = 2
+            self.speed_setting = 2.0
         if data.axes[7] == -1: # low speed (d-pad down)
-            self.speed_setting = 3
+            self.speed_setting = 3.0
 
         # Drive sticks
         left_speed = -data.axes[1] / self.speed_setting # left stick
         right_speed = -data.axes[4] / self.speed_setting # right stick
 
         # Convert skid steering speeds to twist speeds
-        linear_vel  = (left_speed + right_speed) / 2.0 # (m/s)
-        angular_vel  = (right_speed - left_speed) / 2.0 # (rad/s)
+        # linear_vel  = (left_speed + right_speed) / 2.0 # (m/s)
+        # angular_vel  = (right_speed - left_speed) / 2.0 # (rad/s)
 
         # self.servo1_pub.publish(servo1_msg)
 
@@ -81,15 +82,17 @@ class MinimalPublisher(Node):
             self.operating_mode = 1
             self.get_logger().info('Changed to Driving Mode')
 
-        # Publish Twist
-        twist = Twist()
+        left = Float64()
+        right = Float64()
+        # Publish Speeds
         if self.operating_mode == 1:
-            twist.linear.x = linear_vel
-            twist.angular.z = angular_vel
+            left.data = left_speed
+            right.data = right_speed
         else:
-            twist.linear.x = 0.0
-            twist.angular.z = 0.0
-        self.publisher_.publish(twist)
+            left.data = 0.0
+            right.data = 0.0
+        self.publisher_L.publish(left)
+        self.publisher_R.publish(right)
 
 def main(args=None):
     rclpy.init(args=args)
