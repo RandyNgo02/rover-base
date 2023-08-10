@@ -52,4 +52,7 @@ def generate_launch_description():
         #     package='dynamixel_sdk_examples',
         #     executable='read_write_node',
         # )
+        Node(
+            package='rqt_gui', executable='rqt_gui',
+            name='rqt_gui', arguments=['--perspective-file', 'driving.perspective']),
     ])
